@@ -1,0 +1,7 @@
+<script>
+    WebAssembly.instantiateStreaming(
+        fetch('target/wasm32-unknown-unknown/release/hello_wasm.wasm'))
+    .then(({instance}) => {
+        console.log(instance.exports.add(111,222));
+    });
+</script>
