@@ -9,6 +9,10 @@ edition = "2021"
 tokio = { version = "1", features = ["full"] }
 mini-redis = "0.4"
 bytes = "1"
+futures = { version = "0.3.30", features = [] }
+crossbeam = "0.8"
+rand = { version = "0.8.5", features = [] }
+tokio-stream = "0.1.14"
 
 [[example]]
 name = "hello-redis"
