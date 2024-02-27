@@ -77,6 +77,7 @@ async fn main() -> std::io::Result<()> {
             .service(echo)
             // scop：命名空间
             .service(
+                // 路由作用域
                 web::scope("/scop")
                     // 这里访问hello   http://ip:port/scop/  必须以 / 结尾
                     .service(hello)
