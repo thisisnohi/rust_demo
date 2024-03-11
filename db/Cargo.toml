@@ -1,0 +1,21 @@
+[package]
+name = "db"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-rt = "2.9.0"
+actix-web = "4.5.1"
+chrono = { version = "0.4.19", features = ["serde"] }
+# 可以设置环境变量
+dotenv = "0.15.0"
+openssl = { version = "0.10.38", features = ["vendored"] }
+serde = { version = "1.0.134", features = ["derive"] }
+sqlx = { version = "0.7.3", default-features = false, features = [
+    "postgres",
+    "runtime-tokio-rustls",
+    "macros",
+    "chrono",
+] }
