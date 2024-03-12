@@ -1,17 +1,16 @@
-use crate::models::Course;
+use crate::{errors::MyError, models::Course};
 use sqlx::PgPool;
 
-pub async fn get_all_courses_db(pool: &PgPool) -> Vec<Course> {
+pub async fn get_all_courses_db(pool: &PgPool) -> Result<Vec<Course>, MyError> {
     let rows = sqlx::query!(
         r#"select id, teacher_id, name, time 
             from course 
             "#
     )
     .fetch_all(pool)
-    .await
-    .unwrap();
+    .await?;
 
-    let rs = rows
+    let rs: Vec<Course> = rows
         .iter()
         .map(|r| Course {
             teacher_id: r.teacher_id,
@@ -22,10 +21,16 @@ pub async fn get_all_courses_db(pool: &PgPool) -> Vec<Course> {
         .collect();
 
     // 返回
-    rs
+    match rs.len() {
+        0 => Ok(vec![]),
+        _ => Ok(rs),
+    }
 }
 
-pub async fn get_courses_for_teacher_db(pool: &PgPool, teacher_id: i32) -> Vec<Course> {
+pub async fn get_courses_for_teacher_db(
+    pool: &PgPool,
+    teacher_id: i32,
+) -> Result<Vec<Course>, MyError> {
     let rows = sqlx::query!(
         r#"select id, teacher_id, name, time 
             from course 
@@ -34,10 +39,9 @@ pub async fn get_courses_for_teacher_db(pool: &PgPool, teacher_id: i32) -> Vec<C
         teacher_id
     )
     .fetch_all(pool)
-    .await
-    .unwrap();
+    .await?;
 
-    let rs = rows
+    let rs:Vec<Course> = rows
         .iter()
         .map(|r| Course {
             teacher_id: r.teacher_id,
@@ -48,10 +52,13 @@ pub async fn get_courses_for_teacher_db(pool: &PgPool, teacher_id: i32) -> Vec<C
         .collect();
 
     // 返回
-    rs
+    match rs.len() {
+        0 => Err(MyError::NotFound(("Course not found for teacher".into()))),
+        _ => Ok(rs),
+    }
 }
 
-pub async fn get_courses_detail_db(pool: &PgPool, teacher_id: i32, course_id: i32) -> Course {
+pub async fn get_courses_detail_db(pool: &PgPool, teacher_id: i32, course_id: i32) -> Result<Course, MyError> {
     let rows = sqlx::query!(
         r#"select id, teacher_id, name, time 
             from course 
@@ -62,36 +69,57 @@ pub async fn get_courses_detail_db(pool: &PgPool, teacher_id: i32, course_id: i3
     )
     // 只获取一条数据
     .fetch_one(pool)
-    .await
-    .unwrap();
+    .await;
 
-    Course {
-        teacher_id: rows.teacher_id,
-        id: Some(rows.id),
-        name: rows.name.clone(),
-        time: Some(chrono::NaiveDateTime::from(rows.time.unwrap())),
+    if let Ok(rows) = rows{
+        Ok(Course {
+            teacher_id: rows.teacher_id,
+            id: Some(rows.id),
+            name: rows.name.clone(),
+            time: Some(chrono::NaiveDateTime::from(rows.time.unwrap())),
+        })
+    } else{
+        Err(MyError::NotFound("Course id not found".into()))
     }
+    
 }
 
-pub async fn post_new_course_db(pool: &PgPool, new_course: Course) -> Course {
+pub async fn post_new_course_db(pool: &PgPool, new_course: Course) -> Result<Course, MyError> {
+    // 获取最大id
+    let allCourse = get_all_courses_db(&pool).await.unwrap();
+    let id: i32 = match allCourse.len() {
+        0 => 1,
+        _ => {
+            allCourse.iter().reduce(
+                |a, b| 
+                {  if a.id.unwrap() > b.id.unwrap() {
+                        a
+                    } else  {
+                        b
+                    }  
+                }
+            ).unwrap().id.unwrap() + 1
+        },
+    };
+    
     let row = sqlx::query!(
         r#"
            INSERT INTO course (id, teacher_id, name) VALUES ($1, $2, $3)
            RETURNING id, teacher_id, name, time
         "#,
-        new_course.id,
+        id,
         new_course.teacher_id,
         new_course.name,
     )
     // 只获取一条数据
     .fetch_one(pool)
-    .await
-    .unwrap();
+    .await?;
 
-    Course {
+    Ok(Course {
         teacher_id: row.teacher_id,
         id: Some(row.id),
         name: row.name.clone(),
         time: Some(chrono::NaiveDateTime::from(row.time.unwrap())),
-    }
+    })
+    
 }

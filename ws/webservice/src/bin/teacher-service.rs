@@ -16,6 +16,10 @@ mod models;
 #[path = "../db_access.rs"]
 mod db_access;
 
+#[path = "../errors.rs"]
+mod errors;
+
+
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use router::*;

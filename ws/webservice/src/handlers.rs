@@ -3,14 +3,15 @@ use actix_web::{web, HttpResponse};
 use crate::db_access::{
     get_all_courses_db, get_courses_detail_db, get_courses_for_teacher_db, post_new_course_db,
 };
+use crate::errors::MyError;
 use crate::{models::Course, state::AppState};
 
 pub async fn health_check_handler(app_state: web::Data<AppState>) -> HttpResponse {
     let health_check_response = &app_state.health_check_response;
     let mut visit_count = app_state.visit_count.lock().unwrap();
 
-    /// 使用数据库操作
-    let course = get_all_courses_db(&app_state.db).await;
+    // 使用数据库操作
+    let course = get_all_courses_db(&app_state.db).await.unwrap();
 
     let response = format!(
         "{} {} times  course: {:?}",
@@ -26,7 +27,7 @@ pub async fn health_check_handler(app_state: web::Data<AppState>) -> HttpRespons
 pub async fn new_course(
     new_course: web::Json<Course>,
     app_state: web::Data<AppState>,
-) -> HttpResponse {
+) -> Result<HttpResponse, MyError> {
     println!("Received new course");
 
     // let course_count = app_state
@@ -47,16 +48,19 @@ pub async fn new_course(
     //
     // app_state.courses.lock().unwrap().push(new_course);
 
-    /// 使用数据库操作
-    let course = post_new_course_db(&app_state.db, new_course.into()).await;
-    // 返回
-    HttpResponse::Ok().json(course)
+    // // 使用数据库操作
+    // let course = post_new_course_db(&app_state.db, new_course.into()).await;
+    // // 返回
+    // HttpResponse::Ok().json(course)
+
+    post_new_course_db(&app_state.db, new_course.into()).await.map(|course|HttpResponse::Ok().json(course))
+
 }
 
 pub async fn get_courses_for_teacher(
     param: web::Path<(i32,)>,
     app_state: web::Data<AppState>,
-) -> HttpResponse {
+) -> Result<HttpResponse, MyError> {
     println!("Recived new course");
 
     let (id,) = param.into_inner();
@@ -77,15 +81,15 @@ pub async fn get_courses_for_teacher(
     //     HttpResponse::Ok().json("No course found...")
     // }
 
-    /// 使用数据库操作
-    let course = get_courses_for_teacher_db(&app_state.db, id).await;
-    HttpResponse::Ok().json(course)
+    // 使用数据库操作
+    get_courses_for_teacher_db(&app_state.db, id).await.map(|courses| HttpResponse::Ok().json(courses))
+    
 }
 
 pub async fn get_course_detail(
     param: web::Path<(i32, i32)>,
     app_state: web::Data<AppState>,
-) -> HttpResponse {
+) -> Result<HttpResponse, MyError> {
     println!("Recived new course");
 
     let (teacher_id, course_id) = param.into_inner();
@@ -106,10 +110,10 @@ pub async fn get_course_detail(
     //     HttpResponse::Ok().json("No course found...")
     // }
 
-    /// 使用数据库操作
-    let course = get_courses_detail_db(&app_state.db, teacher_id, course_id).await;
-
-    HttpResponse::Ok().json(course)
+    // 使用数据库操作
+    // let course = get_courses_detail_db(&app_state.db, teacher_id, course_id).await;
+    // HttpResponse::Ok().json(course)
+    get_courses_detail_db(&app_state.db, teacher_id, course_id).await.map(|course| HttpResponse::Ok().json(course))
 }
 //
 // #[cfg(test)]
@@ -210,7 +214,7 @@ mod tests {
         });
 
         //
-        let resp = new_course(course, app_state).await;
+        let resp = new_course(course, app_state).await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK)
     }
@@ -230,7 +234,7 @@ mod tests {
         });
 
         let path = web::Path::from((1 as i32,));
-        let resp = get_courses_for_teacher(path, app_state).await;
+        let resp = get_courses_for_teacher(path, app_state).await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK)
     }
@@ -252,7 +256,7 @@ mod tests {
         });
 
         //
-        let resp = get_course_detail(path, app_state).await;
+        let resp = get_course_detail(path, app_state).await.unwrap();
         println!("resp:{:?}", resp);
 
         assert_eq!(resp.status(), StatusCode::OK)
