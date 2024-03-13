@@ -24,3 +24,4 @@ rust+actix+postgresql demo
 
 * 20240323
   * 新增删除、更新接口
+  ![alt text](./asserts/20240313.png)
