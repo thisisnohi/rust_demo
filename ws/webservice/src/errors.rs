@@ -38,8 +38,8 @@ impl MyError {
 impl error::ResponseError for MyError {
     fn status_code(&self) -> StatusCode {
         match self {
-            MyError::DBError(msg) | MyError::ActixError(msg) => StatusCode::INTERNAL_SERVER_ERROR,
-            MyError::NotFound(msg) => StatusCode::NOT_FOUND,
+            MyError::DBError(_msg) | MyError::ActixError(_msg) => StatusCode::INTERNAL_SERVER_ERROR,
+            MyError::NotFound(_msg) => StatusCode::NOT_FOUND,
         }
     }
 
@@ -66,6 +66,6 @@ impl From<actix_web::error::Error> for MyError {
 // use sqlx::error::Error as SQLxError;
 impl From<SQLxError> for MyError {
     fn from(err: SQLxError) -> Self {
-        MyError::ActixError(err.to_string())
+        MyError::DBError(err.to_string())
     }
 }

@@ -17,7 +17,10 @@ rust+actix+postgresql demo
 
 
 ## 过程
-* 20240212
+* 20240312
   demo基本完成
   前台服务请求 -> Routes -> Handlers -> Db Access
   ![alt text](./asserts/image.png)
+
+* 20240323
+  * 新增删除、更新接口

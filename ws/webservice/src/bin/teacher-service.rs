@@ -1,7 +1,7 @@
 use sqlx::postgres::PgPoolOptions;
 use std::{env, io, sync::Mutex};
 
-#[path = "../handlers.rs"]
+#[path = "../handles/mod.rs"]
 mod handlers;
 
 #[path = "../router.rs"]
@@ -10,10 +10,10 @@ mod router;
 #[path = "../state.rs"]
 mod state;
 
-#[path = "../models.rs"]
+#[path = "../models/mod.rs"]
 mod models;
 
-#[path = "../db_access.rs"]
+#[path = "../dbaccess/mod.rs"]
 mod db_access;
 
 #[path = "../errors.rs"]
