@@ -54,6 +54,14 @@ async fn main() -> io::Result<()> {
             // 获取老师所有的课程：curl localhost:3000/courses/1
             // 获取老师的某一课程： curl localhost:3000/courses/1/2
             .configure(course_routes)
+
+            // 教师管理服务
+            // 获取所有课程： curl localhost:3000/teacher/
+            // 添加课程： curl -X POST localhost:3000/teacher/ -H "Content-Type:application/json" -d '{"picture_url": "purl","name":"First course", "profile": "profile"}'
+            // 获取课程详情: curl localhost:3000/teacher/1
+            // 更新课程详情: curl -X PUT localhost:3000/teacher/1 -H "Content-Type:application/json" -d '{"picture_url": "purl","name":"First course", "profile": "还是原来的程集小学吗?"}'
+            // 删除课程： curl -X DELETE localhost:3000/teacher/3
+            .configure(teacher_routes)
     };
 
     HttpServer::new(app).bind("127.0.0.1:3000")?.run().await
