@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use sqlx::postgres::PgPoolOptions;
 use std::{env, io, sync::Mutex};
 
@@ -20,7 +21,7 @@ mod db_access;
 mod errors;
 
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{http, web, App, HttpServer};
 use dotenv::dotenv;
 use router::*;
 use state::AppState;
@@ -45,6 +46,18 @@ async fn main() -> io::Result<()> {
     });
 
     let app = move || {
+        // 支持跨域
+        let cors = Cors::default()
+           .allowed_origin("http://localhost:8080;")
+        .allowed_origin_fn(|origin, _req_head| {
+            origin.as_bytes().starts_with(b"http://localhost")
+        }).allowed_methods(vec!["GET", "POST"])
+        .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+        .allowed_header(http::header::CONTENT_TYPE)
+        .max_age(36000);
+
+    
+
         App::new()
             .app_data(shared_data.clone())
             // curl localhost:3000/health
@@ -61,6 +74,7 @@ async fn main() -> io::Result<()> {
             // 获取课程详情: curl localhost:3000/teacher/1
             // 更新课程详情: curl -X PUT localhost:3000/teacher/1 -H "Content-Type:application/json" -d '{"picture_url": "purl","name":"First course", "profile": "还是原来的程集小学吗?"}'
             // 删除课程： curl -X DELETE localhost:3000/teacher/3
+            .wrap(cors)
             .configure(teacher_routes)
     };
 
